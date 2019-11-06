@@ -1,0 +1,16 @@
+# 数据文件路径，可以是相对或者绝对
+FILE_PATH : data/欧美韩免原价.xlsx
+# 记录匹配失败的数据输出文件
+OUT_FILE_PATH : data/网上最新价格.xlsx
+# 提取多少页Ip代理
+COUNT : 5
+# 数据读取起始行
+START_ROW : 2
+# sku所在列
+SKU_COLUMN : 1
+# 品牌所在列
+BRAND_COLUMN : 2
+# 商品名称所在列
+COMMODITY_NAME_COLUMN : 3
+# 原价所在列
+ORIGINAL_PRICE_COLUMN : 4
