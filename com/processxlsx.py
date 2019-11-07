@@ -58,7 +58,7 @@ class Xlsx:
         for row in range(self.start_row, max_row):
             data = self.getdata(row, rs)
             if data[0]:
-                sql = """INSERT INTO originaldata VALUES ({0}, {1});""".format(data[0], data[3])
+                sql = """INSERT INTO originaldata VALUES ({0}, {1}, {2});""".format(data[0], data[3], 0)
                 if conn.insert_update_table(sql):
                     print('第 {0} 条插入成功'.format(row))
                 else:
@@ -91,7 +91,8 @@ if __name__ == "__main__":
     start = time.time()
     sql = '''CREATE TABLE `originaldata` (
             `sku` VARCHAR(12) DEFAULT NULL PRIMARY KEY,
-            `original_price` VARCHAR(9) DEFAULT NULL
+            `original_price` VARCHAR(9) DEFAULT NULL,
+            `code` int(1) DEFAULT NULL
             )'''
     print('创建原始数据表成功' if conn.create_tabel(sql) else '创建原始数据表失败')
     sql = '''CREATE TABLE `notes` (
