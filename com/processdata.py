@@ -45,7 +45,8 @@ class Data:
         self.cleaner = Cleaner(
             style=True, scripts=True, page_structure=False, safe_attrs_only=False)  # 清除掉CSS等
         self.search_url = 'http://chn.lottedfs.cn/kr/search?comSearchWord={0}&comCollection=GOODS&comTcatCD=&comMcatCD=&comScatCD=&comPriceMin=&comPriceMax=&comErpPrdGenVal_YN=&comHsaleIcon_YN=&comSaleIcon_YN=&comCpnIcon_YN=&comSvmnIcon_YN=&comGiftIcon_YN=&comMblSpprcIcon_YN=&comSort=RANK%2FDESC&comListCount=20&txtSearchClickCheck=Y'
-        self.sql = '''select sku, original_price from originaldata ORDER BY random() LIMIT 1;'''
+        self.chanel_search_url = 'http://chn.lottedfs.cn/kr/search/chanelSearch?searchWord={0}&collection=CHANEL&returnUrl=&startCount=0&listCount=4&sort=WEIGHT%2FDESC%2CRANK%2FDESC&requery=&rt=&tcatCD=&mcatCD=&scatCD=&priceMin=0&priceMax=0&erpPrdGenVal_YN=&hsaleIcon_YN=&saleIcon_YN=&cpnIcon_YN=&svmnIcon_YN=&giftIcon_YN=&mblSpprcIcon_YN=&ltOnlyBrnd_YN=&onlOnlySale_YN=&dfsOnly_YN=&newPrd_YN=&bestPrd_YN=&bf3hrshpCD=&so_YN=&cpnAply_YN=&brndNo=&shopSubTpCd=02&prdasListCount=5&prdOptItemCD=&flteCD=&eventCd='
+        self.sql = '''select sku, original_price, code from originaldata ORDER BY random() LIMIT 1;'''
 
     def getIpPort(self):
         ip_port = conn.fetchall_table(
@@ -77,9 +78,8 @@ class Data:
             conn.delete_table(sql)
 
     def get_urls(self, sku_list):
-        print(sku_list)
         sku_urls = [[self.search_url.format(
-            item[0]), item[1], item[0]] for item in sku_list]
+            item[0]) if item[2] == 0 else self.chanel_search_url.format(item[0]), item[1], item[0]] for item in sku_list]
         return sku_urls
 
     def processhtml(self, html, sku_url):
@@ -116,7 +116,6 @@ class Data:
                     self.failure(sku_url=sku_url)
 
     async def get(self, url):
-        url = 'http://chn.lottedfs.cn/kr/search?comSearchWord=2013506111&comCollection=GOODS&comTcatCD=&comMcatCD=&comScatCD=&comPriceMin=&comPriceMax=&comErpPrdGenVal_YN=&comHsaleIcon_YN=&comSaleIcon_YN=&comCpnIcon_YN=&comSvmnIcon_YN=&comGiftIcon_YN=&comMblSpprcIcon_YN=&comSort=RANK%2FDESC&comListCount=20&txtSearchClickCheck=Y'
         global ip_port
         headers = getheaders()
         async with sem:
