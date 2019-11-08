@@ -57,25 +57,28 @@ class Data:
             raise RuntimeError('Ip代理数量不足，程序被迫停止，请运行获取代理Ip.exe')
 
     def manydata(self, sku_url):
-        sql = """INSERT INTO processdata VALUES ({0}, {1}, {2}, {3});""".format(
+        sql_del = '''DELETE FROM originaldata where sku='{0}';'''.format(sku_url[2])
+        sql = '''INSERT INTO processdata VALUES ('{0}', {1}, {2}, {3});'''.format(
             sku_url[2], sku_url[1], '99999999', 2)
         if conn.insert_update_table(sql):
             print('SKU为：{0} 的商品搜出多条数据'.format(sku_url[2]))
-            conn.delete_table(sql)
+            conn.delete_table(sql_del)
 
     def success(self, sku_url, price):
-        sql = """INSERT INTO processdata VALUES ({0}, {1}, {2}, {3});""".format(
+        sql_del = '''DELETE FROM originaldata where sku='{0}';'''.format(sku_url[2])
+        sql = '''INSERT INTO processdata VALUES ('{0}', {1}, {2}, {3});'''.format(
             sku_url[2], sku_url[1], price, 1)
         if conn.insert_update_table(sql):
             print('SKU为：{0} 的商品搜索成功'.format(sku_url[2]))
-            conn.delete_table(sql)
+            conn.delete_table(sql_del)
 
     def failure(self, sku_url):
-        sql = """INSERT INTO processdata VALUES ({0}, {1}, {2}, {3});""".format(
+        sql_del = '''DELETE FROM originaldata where sku='{0}';'''.format(sku_url[2])
+        sql = '''INSERT INTO processdata VALUES ('{0}', {1}, {2}, {3});'''.format(
             sku_url[2], sku_url[1], '99999999', 0)
         if conn.insert_update_table(sql):
             print('SKU为：{0} 的商品没有搜到'.format(sku_url[2]))
-            conn.delete_table(sql)
+            conn.delete_table(sql_del)
 
     def get_urls(self, sku_list):
         sku_urls = [[self.search_url.format(
@@ -83,8 +86,7 @@ class Data:
         return sku_urls
 
     def processhtml(self, html, sku_url):
-        sql = "DELETE FROM originaldata sku='{0}';".format(sku_url[2])
-        soup = etree.HTML(self.cleaner.clean_html(html))
+        soup = etree.HTML(html)
         li = soup.xpath(
             '//*[@id="searchTabPrdList"]/div[@class="imgType"]/ul[@class="listUl"]/li')
         if len(li) > 1:
@@ -103,7 +105,7 @@ class Data:
                 '//*[@id="contSearch"]/section[@class="chanelSearch"]/span/em/text()')
             if(len(em) > 0):
                 sql_update = "UPDATE originaldata SET code={0} WHERE sku='{1}';".format(1, sku_url[2])
-                print(self.con.insert_update_table(sql_update))
+                conn.insert_update_table(sql_update)
             else:
                 strong = soup.xpath(
                     '//*[@id="chanelPrdList"]/ul/li//div[@class="discount"]/strong/text()')
@@ -113,7 +115,10 @@ class Data:
                     price = re.search(r'\d+(\.\d+)?', strong[0]).group()
                     self.success(sku_url=sku_url, price=price)  # 搜索成功
                 else:
-                    self.failure(sku_url=sku_url)
+                    div = soup.xpath('//div[@class="wrap"]/section//p[@class="ph"]/span')
+                    if len(div) < 1:
+                        self.failure(sku_url=sku_url) # 搜索失败
+        return True
 
     async def get(self, url):
         global ip_port
@@ -123,14 +128,14 @@ class Data:
                 try:
                     async with session.get(url, timeout=self.timeout, proxy='http://' + ip_port) as resp:
                         if resp.status == 200:
-                            return await resp.content.read()
+                            return await resp.read()
                         else:
                             return False
                 except (aiohttp.client_exceptions.ClientProxyConnectionError, aiohttp.ClientHttpProxyError, aiohttp.ClientProxyConnectionError) as cpce:
                     print('代理Ip：{0} 已失效'.format(ip_port))
                     conn.delete_table(
                         '''DELETE FROM proxyip WHERE ip_port='{0}';'''.format(ip_port))
-                    ip_port = '114.239.144.233:9999'
+                    ip_port = '58.23.200.104:8000'
                     return False
                 except (aiohttp.client_exceptions.ClientOSError, aiohttp.client_exceptions.ServerDisconnectedError, aiohttp.client_exceptions.ClientConnectorError) as cce:
                     print('客户端断网失败')
@@ -157,7 +162,7 @@ class Data:
 
     def get_data(self):
         global ip_port
-        ip_port = '114.239.144.233:9999'
+        ip_port = '58.23.200.104:8000'
         while True:
             sku_list = conn.fetchall_table(self.sql)
             if len(sku_list) <= 0:
